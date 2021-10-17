@@ -3,3 +3,7 @@ export const GET_ALL_QUIZ = 'GET_ALL_QUIZ';
 export const NEXT_QUESTION = 'NEXT_QUESTION';
 export const PRE_QUESTION = 'PRE_QUESTION';
 export const RESET_QUIZ = 'RESET_QUIZ';
+export const GET_QUIZ_BY_SUBJECT = 'GET_QUIZ_BY_SUBJECT'
+export const GET_QUIZ = 'GET_QUIZ';
+export const UPDATE_QUIZ = 'UPDATE_QUIZ';
+export const DELETE_QUIZ = 'DELETE_QUIZ';

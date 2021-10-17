@@ -1,65 +1,109 @@
 <template>
-    <div class="title"><b>Exam question manage</b></div>
-    <Dropdown class="select" name="subject" placeholder="Select a subject" :subject=subject label="Subject" />
-    <Input class="input" label="Question" placeholder="Question" name="question" />
-    <Input class="input" label="Answer" placeholder="Answer" name="answer" />
-    <MultiInput label="Incorrect answer" :count="count" />
-    <button @click="handleConfirm">Confirm</button>
+  <div class="quiz-wrapper">
+    Welcome to the quiz
+    <div class="subject-component" v-if="questions.length <= 0">
+      <Dropdown label="Choose a subject" name="subject" :subject="subjects" />
+      <button class="btn-start" @click="handleStart">Start</button>
+    </div>
+    <div v-if="questions.length > 0" class="question-component">
+      <label>Question {{indexQuiz + 1}}: {{question.question}}</label>
+      <RadioButton name="answer" v-for="(item, index) in question.answers" :key="index" :value="item" :label="item" />
+      <div class="group-btn">
+        <button @click="handlePre" v-show="indexQuiz > 0">Pre</button>
+        <button @click="handleNext" v-show="indexQuiz + 1 < questions.length">Next</button>
+        <button @click="handleExecute">Submit</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import Input from '../../components/Input.vue';
-import MultiInput from '../../components/MultiInput.vue';
 import Dropdown from '../../components/Dropdown.vue';
+import RadioButton from '../../components/RadioButton.vue';
+import {computed, onUnmounted} from 'vue';
 import {useForm} from 'vee-validate';
 import {useStore} from 'vuex';
-import {computed, ref} from 'vue';
-import * as yup from 'yup';
+import {useRouter} from 'vue-router';
 export default {
-    name: 'ExamQuestion',
-    components: {Input, MultiInput, Dropdown},
-    async setup() {
-      const count = ref(['1']);
-      const store = useStore();
-      const {handleSubmit, handleReset} = useForm({
-        validationSchema: {
-          question: yup.string().required(),
-        }
-      });
-      const subjects = computed(() => store.state.subject.data);
+  name: 'ExamQuestion',
+  components: {Dropdown, RadioButton},
+  async setup() {
+    const {handleSubmit, handleReset} = useForm();
+    const store = useStore();
+    const router = useRouter();
+    const subjects = computed(() => store.state.subject.data);
+    const questions = computed(() => store.state.quiz.data);
+    const question = computed(() => store.getters['quiz/getQuizForExam'])
+    const indexQuiz = computed(() => store.state.quiz.indexQuiz);
+    const answers = computed(() => store.state.quiz.answers);
 
-      await store.dispatch('subject/getSubjects');
-      
-      const handleConfirm = handleSubmit(async (value) => {
-        const {subject, question, answer, ...nest} = value;
-        const data = {
-          subject_id: subject,
-          question: question,
-          correct_answer: answer,
-          incorrect_answer: nest
-        }
-        console.log(data);
-        await store.dispatch('quiz/addQuiz', data);
-        handleReset();
-        count.value = ['1'];
-      });
-      return {
-        handleConfirm,
-        subject: subjects.value,
-        count,
-      }
+    onUnmounted(() => {
+      store.dispatch('quiz/resetQuiz');
+    });
+    await store.dispatch('subject/getSubjects');
+    const handleStart = handleSubmit(async (value) => {
+      store.dispatch('quiz/getQuizBySubject', {subjectId: value.subject});
+    });
+
+    const handleNext = handleSubmit((value) => {
+      store.dispatch('quiz/nextQuestion', {id: question.value.id, answer: value.answer});
+      handleReset()
+    })
+
+    const handlePre = handleSubmit((value) => {
+      store.dispatch('quiz/preQuestion', {id: question.value.id, answer: value.answer});
+      handleReset()
+    })
+
+    const handleExecute = handleSubmit(async (value) => {
+      await store.dispatch('quiz/preQuestion', {id: question.value.id, answer: value.answer});
+      const result = questions.value.filter(question => answers.value.find(answer => answer.id === question.id && answer.answer === question.correct_answer));
+      handleReset();
+      alert(`successgful ${result.length}/${questions.value.length}`);
+      store.dispatch('quiz/resetQuiz');
+      router.push({path: '/exam-completed'})
+    });
+
+    return {
+      questions,
+      handleStart,
+      handleNext,
+      handlePre,
+      handleExecute,
+      subjects,
+      question,
+      indexQuiz,
     }
+  }
 }
 </script>
 
-<style>
-  .title {
+<style scoped>
+  .quiz-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     margin: 10px 0px;
   }
-  .input {
-    width: 30%;
+  .subject-component {
+    display: flex;
+    gap: 10px;
   }
-  .select {
-    width: 30%;
+  .btn-start {
+    height: 60%;
+    align-self: center;
+    margin-top: 13px;
+  }
+  .question-component {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: flex-start
+  }
+  .group-btn {
+    display: flex;
+    gap: 8px;
+    justify-content: start;
   }
 </style>

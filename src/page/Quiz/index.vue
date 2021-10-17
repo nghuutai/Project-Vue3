@@ -1,108 +1,70 @@
 <template>
-  <div class="quiz-wrapper">
-    Welcome to the quiz
-    <div class="subject-component" v-if="questions.length <= 0">
-      <Dropdown label="Choose a subject" name="subject" :subject="subjects" />
-      <button class="btn-start" @click="handleStart">Start</button>
-    </div>
-    <div v-if="questions.length > 0" class="question-component">
-      <label>Question {{indexQuiz + 1}}: {{question.question}}</label>
-      <RadioButton name="answer" v-for="(item, index) in question.answers" :key="index" :value="item" :label="item" />
-      <div class="group-btn">
-        <button @click="handlePre" v-show="indexQuiz > 0">Pre</button>
-        <button @click="handleNext" v-show="indexQuiz + 1 < questions.length">Next</button>
-        <button @click="handleExecute">Submit</button>
-      </div>
-    </div>
+  <p class="title">Quiz Management</p>
+  <div class="search-component">
+    <button @click="handleCreate">Create</button>
+    <Input placeholder="Search" name="search" />
+  </div>
+  <div>
+    <Table :data="quizs" :columns="columns" />
   </div>
 </template>
 
 <script>
-import Dropdown from '../../components/Dropdown.vue';
-import RadioButton from '../../components/RadioButton.vue';
-import {computed} from 'vue';
-import {useForm} from 'vee-validate';
-import {useStore} from 'vuex';
+import {ref, computed, onUnmounted} from 'vue';
 import {useRouter} from 'vue-router';
+import {useStore} from 'vuex';
+import Input from '../../components/Input.vue';
+import Table from '../../components/Table.vue';
+
 export default {
   name: 'Quiz',
-  components: {Dropdown, RadioButton},
+  components: {Input, Table},
   async setup() {
-    const {handleSubmit, handleReset} = useForm();
-    const store = useStore();
     const router = useRouter();
-    const subjects = computed(() => store.state.subject.data);
-    const questions = computed(() => store.state.quiz.data);
-    const question = computed(() => store.getters['quiz/getQuiz'])
-    const indexQuiz = computed(() => store.state.quiz.indexQuiz);
-    const answers = computed(() => store.state.quiz.answers);
-    await store.dispatch('subject/getSubjects');
-    const handleStart = handleSubmit(async (value) => {
-      console.log(value);
-      store.dispatch('quiz/getAllQuiz', {subjectId: value.subject});
-    });
-
-    const handleNext = handleSubmit((value) => {
-      console.log(value);
-      store.dispatch('quiz/nextQuestion', {id: question.value.id, answer: value.answer});
-      handleReset()
-    })
-
-    const handlePre = handleSubmit((value) => {
-      console.log(value);
-      store.dispatch('quiz/preQuestion', {id: question.value.id, answer: value.answer});
-      handleReset()
-    })
-
-    const handleExecute = handleSubmit(async (value) => {
-      await store.dispatch('quiz/preQuestion', {id: question.value.id, answer: value.answer});
-      const result = questions.value.filter(question => answers.value.find(answer => answer.id === question.id && answer.answer === question.correct_answer));
-      handleReset();
-      alert(`successgful ${result.length}/${questions.value.length}`);
+    const store = useStore();
+    onUnmounted(() => {
       store.dispatch('quiz/resetQuiz');
-      router.push({path: '/exam-completed'})
     });
-    console.log(answers);
+    await store.dispatch('quiz/getAllQuiz', {page: 1, limit: 10});
+
+    const quizs = computed(() => store.getters['quiz/getAll1Quiz']);
+    const columns = ref(['Id', 'Question', 'Subject']);
+
+    const handleCreate = () => {
+      router.push({path: '/create-quiz'});
+    }
     return {
-      questions,
-      handleStart,
-      handleNext,
-      handlePre,
-      handleExecute,
-      subjects,
-      question,
-      indexQuiz,
+        quizs,
+        columns,
+        handleCreate,
     }
   }
 }
 </script>
 
-<style scoped>
-  .quiz-wrapper {
+<style csoped>
+  .title {
+    text-align: center;
+  }
+  .search-component {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    margin: 10px 0px;
   }
-  .subject-component {
-    display: flex;
-    gap: 10px;
+  table, th, td {
+    /* border: 1px solid black; */
+    border-collapse: collapse;
+    border-bottom: 0.2px solid #ddd;
+    padding: 8px;
   }
-  .btn-start {
-    height: 60%;
-    align-self: center;
-    margin-top: 13px;
+  table {
+      /* border-collapse: collapse; */
+    width: 100%;
   }
-  .question-component {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    justify-content: flex-start
+  table td {
+    text-align: center;
   }
-  .group-btn {
-    display: flex;
-    gap: 8px;
-    justify-content: start;
+  tr:hover {
+    background-color: #ddd;
   }
 </style>

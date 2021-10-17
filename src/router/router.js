@@ -3,6 +3,8 @@ import SignUp from '../page/Sign-up';
 import NavBar from '../components/NavBar.vue';
 import ExamQuestion from '../page/ExamQuestion'
 import ExamCompleted from '../page/ExamCompleted';
+import CreateQuiz from '../page/Quiz/CreateQuiz.vue';
+import EditQuiz from '../page/Quiz/EditQuiz.vue';
 import Quiz from '../page/Quiz';
 import {TOKEN} from '../common/constant';
 
@@ -41,12 +43,20 @@ export const routes = [
         },
         children: [
             {
-              path: 'exam-question',
-              component: ExamQuestion,
+                path: 'quiz',
+                component: Quiz,
             },
             {
-              path: 'quiz',
-              component: Quiz,
+                path: 'quiz/:id',
+                component: EditQuiz,
+            },
+            {
+                path: 'create-quiz',
+                component: CreateQuiz,
+            },
+            {
+              path: 'exam-question',
+              component: ExamQuestion,
             },
             {
               path: 'exam-completed',

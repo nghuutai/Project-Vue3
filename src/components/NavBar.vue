@@ -1,7 +1,7 @@
 <template>
     <nav class="nav-bar">
-        <router-link class="nav-bar-link" to="/exam-question">Quiz</router-link>
-        <router-link class="nav-bar-link" to="/quiz">Test</router-link>
+        <router-link class="nav-bar-link" to="/quiz">Quiz</router-link>
+        <router-link class="nav-bar-link" to="/exam-question">Test</router-link>
         <p class="btn-logout" @click="handleLogout">Logout</p>
     </nav>
     <Suspense>
